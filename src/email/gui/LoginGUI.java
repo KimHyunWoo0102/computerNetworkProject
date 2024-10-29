@@ -1,8 +1,12 @@
 package email.gui;
 
 import javax.swing.*; // Swing 컴포넌트 사용을 위한 import
+
+import java.awt.HeadlessException;
 import java.awt.event.ActionEvent; // ActionEvent 사용을 위한 import
 import java.awt.event.ActionListener; // ActionListener 인터페이스 사용을 위한 import
+import java.io.IOException;
+
 import email.smtp.*; // 클래스 import
 
 public class LoginGUI {
@@ -56,35 +60,44 @@ public class LoginGUI {
 
         // 이메일 형식 검증
         if (!isValidEmail(email)) {
-            showError("이메일 주소 형식이 올바르지 않습니다.");
+            showError("이메일 주소 형식이 올바르지 않습니다. \n예시: 홍길동@naver.com 꼴로 입력해주세요.");
             return; // 유효하지 않은 경우 반환
         }
 
-        System.out.println("이메일 : "+email+" 비밀번호 : "+password+" 입력완료!");
+        System.out.println("이메일 : " + email + " 비밀번호 : " + password + " 입력완료!");
         // Auth 인스턴스 생성
-        Auth auth = new Auth(email, password);
-        
+        Client client = new Client(email, password);
+
         // 이메일 도메인 검증
-        if (!auth.isCorrectAddress()) {
+        if (!client.mailService.isCorrectAddress()) {
             showError("지원하지 않는 이메일 도메인입니다. @naver.com을 사용하세요.");
             return; // 유효하지 않은 경우 반환
         }
 
-        JOptionPane.showMessageDialog(frame, "로그인 성공!"); // 성공 메시지 표시
-        clearFields(); // 필드 초기화
-        frame.dispose(); // 로그인 창 닫기
-            
-        // SendEmailGUI 인스턴스 생성 및 표시
-        SendEmailGUI sendEmailGUI = new SendEmailGUI(auth); // SendEmailGUI 생성
-        sendEmailGUI.display(); // SendEmailGUI 표시
+        // 인증 시도
+        try {
+        		client.mailService.connect();
+			    // 인증 시도
+			    JOptionPane.showMessageDialog(frame, "로그인 성공!"); // 성공 메시지 표시
+			    clearFields(); // 필드 초기화
+			    frame.dispose(); // 로그인 창 닫기
+
+			    // SendEmailGUI 인스턴스 생성 및 표시
+			    SendEmailGUI sendEmailGUI = new SendEmailGUI(client); // SendEmailGUI 생성
+			    sendEmailGUI.display(); // SendEmailGUI 표시
+		} catch (IOException e) {
+	        showError(e.getMessage()); // 예외 메시지를 사용자에게 표시
+	    } catch (HeadlessException e) {
+	        e.printStackTrace(); // 오류 스택 트레이스 출력
+	        showError("오류가 발생했습니다. 다시 시도해주세요."); // 일반 오류 메시지 표시
+	    }
     }
 
- // 이메일 주소의 유효성 검사
+    // 이메일 주소의 유효성 검사
     private boolean isValidEmail(String email) {
         String emailRegex = "^[\\w-\\.]+@[\\w-]+\\.[a-zA-Z]{2,}$"; // 이메일 정규 표현식
         return email.matches(emailRegex);
     }
-
 
     // 오류 메시지를 팝업으로 보여주는 메소드
     private void showError(String message) {
