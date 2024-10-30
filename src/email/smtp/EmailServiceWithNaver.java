@@ -155,7 +155,7 @@ public class EmailServiceWithNaver {
     // Check an array of responses
 
     // Check a single response
-    public boolean checkResponse(String reply) {
+    public boolean checkResponse(String reply) throws NullPointerException {
         return reply.startsWith("2") || reply.startsWith("3");
     }
 
