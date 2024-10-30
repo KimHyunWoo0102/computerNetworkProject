@@ -81,7 +81,7 @@ public class SendEmailGUI {
         
         // 이메일 전송 요청
         try {
-            client.mailService.sendEmail(recipient, subject, message); // 이메일 전송
+            client.mailService.sendEmail(recipient, subject, message,null); // 이메일 전송
             statusLabel.setText("이메일이 성공적으로 전송되었습니다.");
             clearFields(); // 전송 후 필드 초기화
         } catch (IOException e) {
