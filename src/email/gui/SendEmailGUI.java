@@ -90,7 +90,8 @@ public class SendEmailGUI {
                     emailService.sendEmail(recipient, subject, message, null); // 첨부파일 없이 전송
                 }
 
-                System.out.println("이메일이 성공적으로 전송되었습니다.");
+                // 이메일 전송 완료 메시지
+                JOptionPane.showMessageDialog(frame, "이메일이 성공적으로 전송되었습니다.", "전송 완료", JOptionPane.INFORMATION_MESSAGE);
                 statusLabel.setText("이메일이 성공적으로 전송되었습니다.");
                 clearFields();
             }
