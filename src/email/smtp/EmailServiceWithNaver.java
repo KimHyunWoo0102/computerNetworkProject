@@ -1,5 +1,7 @@
 package email.smtp;
 
+import email.mime.MimeMessageBuilder;
+
 import java.io.*;
 import java.net.*;
 import java.util.Base64;
@@ -14,8 +16,8 @@ public class EmailServiceWithNaver {
     protected BufferedReader in;
     protected String mail, password, smtpServer;
     protected int port;
-    
-    // 요청과 응답을 저장할 리스트
+
+    // List to store requests and responses
     protected List<String> responses;
 
     public EmailServiceWithNaver(String mail, String password, String smtpServer, int port) {
@@ -23,147 +25,141 @@ public class EmailServiceWithNaver {
         this.password = password;
         this.smtpServer = smtpServer;
         this.port = port;
-        this.responses = new ArrayList<>(); // 응답 리스트 초기화
+        this.responses = new ArrayList<>(); // Initialize response list
     }
 
-    // 정상적인 도메인 이름을 입력받았는지 검사
+    // Check if a valid domain name has been entered
     public boolean isCorrectAddress() {
         return port != -1;
     }
 
     public void connect() throws IOException {
-        System.out.println("SMTP 서버 연결 시도: " + smtpServer + " 포트: " + port);
+        System.out.println("Attempting to connect to SMTP server: " + smtpServer + " Port: " + port);
 
         factory = (SSLSocketFactory) SSLSocketFactory.getDefault();
         socket = (SSLSocket) factory.createSocket(smtpServer, port);
         in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
         out = new PrintWriter(new OutputStreamWriter(socket.getOutputStream()));
 
-        // 핸드셰이크 시작
-        System.out.println("핸드셰이크 시작...");
-        socket.startHandshake(); // 핸드셰이크 시작
+        // Start handshake
+        System.out.println("Starting handshake...");
+        socket.startHandshake(); // Start handshake
 
-        // 서버 응답 처리 및 명령어 전송
-        getResponse(); // 서버 응답 읽기
+        // Process server response and send commands
+        getSingleResponse(); // Read server response
 
-        // EHLO 명령어 전송
+        // Send EHLO command
         sendCommand("EHLO " + smtpServer);
-        getResponse();
-        // AUTH LOGIN 명령어 전송
-        
+        get250Response();
+
+        // Send AUTH LOGIN command
         sendCommand("AUTH LOGIN");
-        getResponse();
-        
-        // 이메일 주소 인코딩 전송
+        getSingleResponse();
+
+        // Send encoded email address
         sendCommand(Base64.getEncoder().encodeToString(mail.getBytes("UTF-8")));
-        
-        String []authResponses = getResponse();
-        
-        // 인증 과정에서 응답 확인
-     
-        // 비밀번호 인코딩 전송
+
+        String authResponses = getSingleResponse();
+
+        // Check responses during authentication process
+
+        // Send encoded password
         sendCommand(Base64.getEncoder().encodeToString(password.getBytes("UTF-8")));
-        authResponses = getResponse();
-        
-        // 인증 과정에서 응답 확인
+        authResponses = getSingleResponse();
+
+        // Check responses during authentication process
         if (!checkResponse(authResponses)) {
-            throw new IOException("인증 실패: 올바른 이메일/비밀번호를 입력해주세요.");
+            throw new IOException("Authentication failed: Please enter a valid email/password.");
         }
-        // 마지막 응답 확인
+        // Check final response
     }
 
-
-
-    // 요청과 응답을 출력하는 메서드
+    // Method to output requests and responses
     protected void sendCommand(String command) throws IOException {
-        System.out.println("명령어 전송: " + command);
+        System.out.println("Client command: " + command);
         out.println(command);
         out.flush();
     }
 
-    public void sendEmail(String to, String subject, String body) throws IOException {
-        // 메시지 생성 및 전송
+    public void sendEmail(String to, String subject, String body,File[] attachments) throws IOException {
+        // Create and send message
+        MimeMessageBuilder builder = new MimeMessageBuilder(mail, to, subject, body, attachments);
+        String mimeMessage = builder.build();
+
         sendCommand("MAIL FROM:<" + mail + ">");
-        String[] response = getResponse();
-        
+        String response = getSingleResponse();
 
         sendCommand("RCPT TO:<" + to + ">");
-        response = getResponse();
+        response = getSingleResponse();
         if (!checkResponse(response)) {
-            throw new IOException("수신자 이메일 주소에 오류가 발생했습니다. 올바른 이메일 주소인지 확인해주세요.\n"+ String.join(", ", response));
+            throw new IOException("An error occurred with the recipient's email address. Please check if it is correct.\n" + String.join(", ", response));
         }
 
         sendCommand("DATA");
-        response = getResponse();
+        response = getSingleResponse();
         if (!checkResponse(response)) {
-            throw new IOException("데이터 전송 준비 과정에서 오류가 발생했습니다.\n " +  String.join(", ", response));
+            throw new IOException("An error occurred during the data transmission preparation.\n " + String.join(", ", response));
         }
 
-        // 이메일 본문 작성 및 전송
-        System.out.println("이메일 본문 전송 중...");
-        sendCommand("From: " + mail);
-        sendCommand("To: " + to);
-        sendCommand("Subject: " + subject);
-        sendCommand(""); // 빈 줄 추가
+        // Write and send email body
 
-        String[] lines = body.split("\n");
-        for (String line : lines) {
-            sendCommand(line); // 본문 내용 전송
-        }
-        sendCommand("."); // 데이터 전송 완료를 알림
-        response = getResponse();
+        out.print(mimeMessage + "\r\n.\r\n");
+        out.flush();
+        response = getSingleResponse();
+
         if (!checkResponse(response)) {
-            throw new IOException("이메일 본문 전송 중 오류가 발생했습니다.\n " +  String.join(", ", response));
+            throw new IOException("An error occurred while sending the email body.\n " + String.join(", ", response));
         }
-        
-        // QUIT 명령어 전송
-        System.out.println("QUIT 명령어 전송");
+    }
+    public void Quit() throws IOException {
+        // Send QUIT command
+        System.out.println("Sending QUIT command");
         out.println("QUIT");
         out.flush();
-        response = getResponse();
+        String response = getSingleResponse();
         if (!checkResponse(response)) {
-            throw new IOException("연결 종료 과정에서 오류가 발생했습니다.\n " + String.join(", ", response));
+            throw new IOException("An error occurred during the connection termination process.\n " + String.join(", ", response));
         }
-
-        // 소켓 닫기
+        // Close socket
         socket.close();
         out.close();
         in.close();
-        
-        System.out.println("이메일 전송 완료 및 연결 종료");
+        System.out.println("Email sent and connection terminated");
     }
 
-
-
-    // 서버 응답 읽기
-    public String[] getResponse() throws IOException {
-        ArrayList<String> responses = new ArrayList<>(); // 응답을 저장할 ArrayList
+    // Read server response
+    public String[] get250Response() throws IOException {
+        ArrayList<String> responses = new ArrayList<>(); // ArrayList to store responses
         String response;
 
-        // 여러 줄의 응답을 읽어오기
-        while ((response = in.readLine()) != null) {
-            responses.add(response); // 응답 추가
-            System.out.println(response);
-            if (!response.startsWith("250-")) { // 250으로 시작하지 않으면 반복 종료
+        // Read multiple lines of responses
+        while ((response = getSingleResponse()) != null) {
+            responses.add(response); // Add response
+            if (!response.startsWith("250-")) { // Stop loop if not starting with 250
                 break;
             }
         }
 
-        return responses.toArray(new String[0]); // ArrayList를 배열로 변환하여 반환
+        return responses.toArray(new String[0]); // Convert ArrayList to array and return
     }
-    
-    
- 
-    // 모든 응답을 반환하는 메서드
-    public boolean checkResponse(String []replys) {
-    	for(String reply:replys) {
-    		if(!reply.startsWith("2")||!reply.startsWith("3"))
-    			return false;
-    	}
-    	
-    	return true;
+
+    public String getSingleResponse() throws IOException {
+        String response = in.readLine(); // Read a single line
+        if (response != null) {
+            System.out.println(response); // Print the response
+        }
+        return response; // Return the response
     }
-    // 이메일 주소의 유효성 검사
+
+    // Check an array of responses
+
+    // Check a single response
+    public boolean checkResponse(String reply) throws NullPointerException {
+        return reply.startsWith("2") || reply.startsWith("3");
+    }
+
+
+    // Email address validation
     @Override
     public String toString() {
         return "Server: " + smtpServer + ", Mail ID: " + mail;
