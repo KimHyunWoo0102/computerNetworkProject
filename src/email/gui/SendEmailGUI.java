@@ -70,7 +70,7 @@ public class SendEmailGUI {
         String recipient = recipientField.getText();
         String subject = subjectField.getText();
         String message = messageArea.getText();
-
+        String[] recipients=recipient.split(",");
         if (recipient.isEmpty() || subject.isEmpty() || message.isEmpty()) {
             showError("이메일 주소, 제목, 메시지를 모두 입력하세요.");
             return;
@@ -78,22 +78,23 @@ public class SendEmailGUI {
 
         try {
             EmailServiceWithNaver emailService = client.mailService;
-
             if (emailService.isCorrectAddress()) {
                 emailService.connect();
-                if (attachedFile != null && attachedFile.exists()) {
-                    // 첨부파일이 있는 경우
-                    File[] attachments = { attachedFile }; // 첨부파일 배열
-                    emailService.sendEmail(recipient, subject, message, attachments); // MIME 이메일 전송
-                } else {
-                    // 첨부파일이 없는 경우
-                    emailService.sendEmail(recipient, subject, message, null); // 첨부파일 없이 전송
+                for(String mailRec:recipients) {
+                    if (attachedFile != null && attachedFile.exists()) {
+                        // 첨부파일이 있는 경우
+                        File[] attachments = {attachedFile}; // 첨부파일 배열
+                        emailService.sendEmail(mailRec, subject, message, attachments); // MIME 이메일 전송
+                    } else {
+                        // 첨부파일이 없는 경우
+                        emailService.sendEmail(mailRec, subject, message, null); // 첨부파일 없이 전송
+                    }
                 }
-
                 // 이메일 전송 완료 메시지
                 JOptionPane.showMessageDialog(frame, "이메일이 성공적으로 전송되었습니다.", "전송 완료", JOptionPane.INFORMATION_MESSAGE);
                 statusLabel.setText("이메일이 성공적으로 전송되었습니다.");
                 clearFields();
+                emailService.Quit();
             }
         } catch (IOException e) {
             showError("전송 오류: " + e.getMessage());
