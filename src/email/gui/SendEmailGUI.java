@@ -1,6 +1,7 @@
 package email.gui;
 
-import javax.swing.*; 
+import javax.swing.*;
+import java.awt.Color;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
@@ -22,7 +23,7 @@ public class SendEmailGUI {
     private JLabel errorLabel;
     private File attachedFile;
     private Client client;
-    private FileHandler fileHandler; // 파일 처리 핸들러
+    private FileHandler fileHandler; // File handling utility
 
     public SendEmailGUI(Client client) {
         this.client = client;
@@ -38,6 +39,7 @@ public class SendEmailGUI {
         frame = new JFrame("메일 전송");
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         frame.setSize(400, 400);
+        frame.setLocationRelativeTo(null); // Center the frame
 
         recipientField = new JTextField(15);
         subjectField = new JTextField(15);
@@ -48,6 +50,18 @@ public class SendEmailGUI {
         fileField.setEditable(false);
         statusLabel = new JLabel();
         errorLabel = new JLabel();
+        errorLabel.setForeground(Color.RED); // Set error message color
+
+        // Set colors for the components
+        recipientField.setBackground(new Color(210, 210, 210)); // Light gray
+        subjectField.setBackground(new Color(210, 210, 210)); // Light gray
+        messageArea.setBackground(new Color(210, 210, 210)); // Light gray
+        fileField.setBackground(new Color(210, 210, 210)); // Light gray
+
+        sendButton.setBackground(new Color(70, 130, 180)); // Steel blue
+        sendButton.setForeground(Color.WHITE); // White text
+        attachButton.setBackground(new Color(70, 130, 180)); // Steel blue
+        attachButton.setForeground(Color.WHITE); // White text
 
         sendButton.addActionListener(new ActionListener() {
             @Override
@@ -70,7 +84,8 @@ public class SendEmailGUI {
         String recipient = recipientField.getText();
         String subject = subjectField.getText();
         String message = messageArea.getText();
-        String[] recipients=recipient.split(",");
+        String[] recipients = recipient.split(",");
+
         if (recipient.isEmpty() || subject.isEmpty() || message.isEmpty()) {
             showError("이메일 주소, 제목, 메시지를 모두 입력하세요.");
             return;
@@ -80,17 +95,17 @@ public class SendEmailGUI {
             EmailServiceWithNaver emailService = client.mailService;
             if (emailService.isCorrectAddress()) {
                 emailService.connect();
-                for(String mailRec:recipients) {
+                for (String mailRec : recipients) {
                     if (attachedFile != null && attachedFile.exists()) {
-                        // 첨부파일이 있는 경우
-                        File[] attachments = {attachedFile}; // 첨부파일 배열
-                        emailService.sendEmail(mailRec, subject, message, attachments); // MIME 이메일 전송
+                        // If an attachment exists
+                        File[] attachments = {attachedFile};
+                        emailService.sendEmail(mailRec.trim(), subject, message, attachments); // Send email with attachment
                     } else {
-                        // 첨부파일이 없는 경우
-                        emailService.sendEmail(mailRec, subject, message, null); // 첨부파일 없이 전송
+                        // If no attachment
+                        emailService.sendEmail(mailRec.trim(), subject, message, null); // Send email without attachment
                     }
                 }
-                // 이메일 전송 완료 메시지
+                // Show success message
                 JOptionPane.showMessageDialog(frame, "이메일이 성공적으로 전송되었습니다.", "전송 완료", JOptionPane.INFORMATION_MESSAGE);
                 statusLabel.setText("이메일이 성공적으로 전송되었습니다.");
                 clearFields();
@@ -129,7 +144,7 @@ public class SendEmailGUI {
         fileField.setText("");
         statusLabel.setText("");
         errorLabel.setText("");
-        attachedFile = null; // 필드를 null로 초기화
+        attachedFile = null; // Reset attached file
     }
 
     private void setLayout() {

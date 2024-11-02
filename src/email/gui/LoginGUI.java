@@ -1,127 +1,150 @@
 package email.gui;
 
-import javax.swing.*; // Swing 컴포넌트 사용을 위한 import
-
-import java.awt.HeadlessException;
-import java.awt.event.ActionEvent; // ActionEvent 사용을 위한 import
-import java.awt.event.ActionListener; // ActionListener 인터페이스 사용을 위한 import
+import javax.swing.*;
+import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.io.IOException;
-
-import email.smtp.*; // 클래스 import
+import email.smtp.Client;
 
 public class LoginGUI {
-    private JFrame frame; // 로그인 창을 위한 JFrame
-    private JTextField emailField; // 이메일 입력 필드를 위한 JTextField
-    private JPasswordField passwordField; // 비밀번호 입력 필드를 위한 JPasswordField
-    private JButton loginButton; // 로그인 버튼을 위한 JButton
-    private JLabel errorLabel; // 오류 메시지를 표시할 JLabel
+    private JFrame frame;
+    private JTextField emailField;
+    private JPasswordField passwordField;
+    private JButton loginButton;
+    private JLabel errorLabel;
 
-    // LoginGUI 생성자
     public LoginGUI() {
-        initComponents(); // 컴포넌트 초기화 메소드 호출
+        initComponents(); // Call component initialization method
     }
 
-    // 로그인 화면을 표시하는 메소드
     public void display() {
-        frame.setVisible(true); // 프레임을 보이도록 설정
+        frame.setVisible(true);
     }
 
-    // GUI 컴포넌트를 초기화하는 메소드
     private void initComponents() {
-        frame = new JFrame("로그인"); // 창 이름 변경
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE); // 창 닫기 동작 설정
-        frame.setSize(250, 150); // 창 크기 설정
+        frame = new JFrame("Login");
+        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setSize(300, 250);
+        frame.setLocationRelativeTo(null); // Center the frame
+        frame.setResizable(false); // Make the frame non-resizable
 
-        emailField = new JTextField(15); // 이메일 입력 필드 크기 조정
-        passwordField = new JPasswordField(15); // 비밀번호 입력 필드 크기 조정
-        loginButton = new JButton("Login"); // 로그인 버튼 생성
-        errorLabel = new JLabel(); // 오류 메시지를 표시할 레이블 생성
+        emailField = new JTextField(8); // Width reduced for input field
+        passwordField = new JPasswordField(8); // Width reduced for input field
+        loginButton = new JButton("Login");
+        errorLabel = new JLabel();
+        errorLabel.setForeground(Color.RED); // Set error message color
 
+        // Set component styles
+        emailField.setBackground(new Color(210, 210, 210)); // Light grey for input fields
+        passwordField.setBackground(new Color(210, 210, 210)); // Light grey for input fields
+        emailField.setForeground(Color.BLACK); // Input text color
+        passwordField.setForeground(Color.BLACK); // Input text color
+        emailField.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        passwordField.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+        // Set button styles
+        loginButton.setBackground(new Color(52, 152, 219));
+        loginButton.setForeground(Color.WHITE);
+        loginButton.setFocusPainted(false);
+        loginButton.setFont(new Font("SansSerif", Font.BOLD, 12));
+
+        // Add action listener to the login button
         loginButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                onLoginButtonClick(); // 로그인 버튼 클릭 시 호출되는 메소드
+                onLoginButtonClick();
             }
         });
 
-        setLayout(); // 레이아웃 설정
+        setLayout(); // Set layout
     }
 
-    // 로그인 버튼 클릭 시 호출되는 메소드
     private void onLoginButtonClick() {
-        String email = emailField.getText(); // 이메일 입력값 가져오기
-        String password = new String(passwordField.getPassword()); // 비밀번호 입력값 가져오기
+        String email = emailField.getText();
+        String password = new String(passwordField.getPassword());
 
-        // 이메일과 비밀번호가 비어 있는지 확인
         if (email.isEmpty() || password.isEmpty()) {
-            showError("이메일 또는 비밀번호를 입력하세요.");
+            showError("이메일과 비밀번호를 입력하세요.");
             return;
         }
 
-        // 이메일 형식 검증
         if (!isValidEmail(email)) {
-            showError("이메일 주소 형식이 올바르지 않습니다. \n예시: 홍길동@naver.com 꼴로 입력해주세요.");
-            return; // 유효하지 않은 경우 반환
+            showError("잘못된 이메일 형식입니다. 예: johndoe@domain.com");
+            return;
         }
 
-        System.out.println("이메일 : " + email + " 비밀번호 : " + password + " 입력완료!");
-        // Auth 인스턴스 생성
         Client client = new Client(email, password);
 
-        // 이메일 도메인 검증
         if (!client.mailService.isCorrectAddress()) {
-            showError("지원하지 않는 이메일 도메인입니다. @naver.com을 사용하세요.");
-            return; // 유효하지 않은 경우 반환
+            showError("지원되지 않는 이메일 도메인입니다. @naver.com을 사용하세요.");
+            return;
         }
 
-        // 인증 시도
         try {
-        		client.mailService.connect();
-			    // 인증 시도
-			    JOptionPane.showMessageDialog(frame, "로그인 성공!"); // 성공 메시지 표시
-			    clearFields(); // 필드 초기화
-			    frame.dispose(); // 로그인 창 닫기
+            client.mailService.connect();
+            JOptionPane.showMessageDialog(frame, "로그인 성공!");
+            clearFields();
+            frame.dispose();
 
-			    // SendEmailGUI 인스턴스 생성 및 표시
-			    SendEmailGUI sendEmailGUI = new SendEmailGUI(client); // SendEmailGUI 생성
-			    sendEmailGUI.display(); // SendEmailGUI 표시
-		} catch (IOException e) {
-	        showError(e.getMessage()); // 예외 메시지를 사용자에게 표시
-	    } catch (HeadlessException e) {
-	        e.printStackTrace(); // 오류 스택 트레이스 출력
-	        showError("오류가 발생했습니다. 다시 시도해주세요."); // 일반 오류 메시지 표시
-	    }
+            SendEmailGUI sendEmailGUI = new SendEmailGUI(client);
+            sendEmailGUI.display();
+        } catch (IOException | HeadlessException e) {
+            showError("오류가 발생했습니다. 다시 시도하세요.");
+        }
     }
 
-    // 이메일 주소의 유효성 검사
     private boolean isValidEmail(String email) {
-        String emailRegex = "^[\\w-\\.]+@[\\w-]+\\.[a-zA-Z]{2,}$"; // 이메일 정규 표현식
+        String emailRegex = "^[\\w-\\.]+@[\\w-]+\\.[a-zA-Z]{2,}$";
         return email.matches(emailRegex);
     }
 
-    // 오류 메시지를 팝업으로 보여주는 메소드
     private void showError(String message) {
-        errorLabel.setText(message); // 오류 메시지를 설정
-        JOptionPane.showMessageDialog(frame, message, "오류", JOptionPane.ERROR_MESSAGE); // 팝업으로 오류 메시지 표시
+        errorLabel.setText(message);
+        JOptionPane.showMessageDialog(frame, message, "오류", JOptionPane.ERROR_MESSAGE);
     }
 
-    // 입력 필드를 초기화하는 메소드
     private void clearFields() {
-        emailField.setText(""); // 이메일 필드 초기화
-        passwordField.setText(""); // 비밀번호 필드 초기화
+        emailField.setText("");
+        passwordField.setText("");
     }
 
-    // 레이아웃을 설정하는 메소드
     private void setLayout() {
-        JPanel panel = new JPanel(); // 패널 생성
-        frame.add(panel); // 패널을 프레임에 추가
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS)); // 수직 레이아웃 설정
+        JPanel panel = new JPanel();
+        frame.add(panel);
+        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
+        panel.setBackground(new Color(50, 50, 50)); // Dark background for the panel
 
-        panel.add(new JLabel("Email:")); // 이메일 레이블 추가
-        panel.add(emailField); // 이메일 입력 필드 추가
-        panel.add(new JLabel("Password:")); // 비밀번호 레이블 추가
-        panel.add(passwordField); // 비밀번호 입력 필드 추가
-        panel.add(loginButton); // 로그인 버튼 추가
-        panel.add(errorLabel); // 오류 메시지 레이블 추가
+        // Add top margin
+        panel.add(Box.createVerticalStrut(10));
+        
+        // Add components with spacing
+        panel.add(createLabelField("이메일:", emailField));
+        panel.add(Box.createVerticalStrut(25)); // Add spacing between input fields
+        panel.add(createLabelField("비밀번호:", passwordField));
+        panel.add(Box.createVerticalStrut(25)); // Add more spacing after the password field
+        
+        // Set login button panel spacing
+        JPanel buttonPanel = new JPanel();
+        buttonPanel.setBackground(new Color(70, 70, 70)); // Dark background for the button panel
+        buttonPanel.add(loginButton);
+        panel.add(buttonPanel);
+
+        // Add error message with margin
+        panel.add(Box.createVerticalStrut(5));
+        panel.add(errorLabel);
+        errorLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+    }
+
+    private JPanel createLabelField(String labelText, JComponent field) {
+        JPanel panel = new JPanel(new BorderLayout());
+        panel.setBackground(new Color(70, 70, 70)); // Set label field background to dark
+        JLabel label = new JLabel(labelText);
+        label.setFont(new Font("SansSerif", Font.PLAIN, 12));
+        label.setForeground(Color.WHITE); // Set label text color to white
+        panel.add(label, BorderLayout.WEST);
+        panel.add(field, BorderLayout.CENTER);
+        panel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        return panel;
     }
 }
