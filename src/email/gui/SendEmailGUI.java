@@ -60,10 +60,10 @@ public class SendEmailGUI {
         errorLabel.setForeground(Color.RED); // Set error message color
 
         // Set colors for the components
-        recipientField.setBackground(new Color(179, 181, 197));
-        subjectField.setBackground(new Color(179, 181, 197));
-        messageArea.setBackground(new Color(179, 181, 197));
-        fileField.setBackground(new Color(179, 181, 197));
+        recipientField.setForeground(Color.WHITE);
+        subjectField.setForeground(Color.WHITE);
+        messageArea.setForeground(Color.WHITE);
+        fileField.setForeground(Color.WHITE);
        
         attachButton.setBackground(new Color(204, 122, 136));	// 배경색 지정
         attachButton.setForeground(Color.WHITE);
@@ -125,7 +125,6 @@ public class SendEmailGUI {
                 JOptionPane.showMessageDialog(frame, "이메일이 성공적으로 전송되었습니다.", "전송 완료", JOptionPane.INFORMATION_MESSAGE);
                 statusLabel.setText("이메일이 성공적으로 전송되었습니다.");
                 clearFields();
-                emailService.Quit();
             }
         } catch (IOException e) {
             showError("전송 오류: " + e.getMessage());
