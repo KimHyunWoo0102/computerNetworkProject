@@ -202,16 +202,22 @@ public class SendEmailGUI {
     
     // 주기적으로 NOOP 명령을 보내기 위한 스케줄러 설정
     private void startNoopScheduler() {
+        if (noopScheduler != null && !noopScheduler.isShutdown()) {
+            System.out.println("NOOP 스케줄러가 이미 실행 중입니다.");
+            return;
+        }
         noopScheduler = Executors.newSingleThreadScheduledExecutor();
         noopScheduler.scheduleAtFixedRate(() -> {
             try {
                 client.mailService.sendNoop(); // NOOP 명령 전송
+                System.out.println("NOOP 명령이 전송되었습니다.");
             } catch (IOException e) {
                 showError("NOOP 명령 전송 오류: " + e.getMessage());
                 stopNoopScheduler(); // 오류 발생 시 스케줄러 중지
             }
-        }, 0, 9, TimeUnit.SECONDS); // 5초마다 NOOP 전송
+        }, 0, 9, TimeUnit.SECONDS); // 9초마다 NOOP 전송
     }
+
 
     // 스케줄러 중지
     private void stopNoopScheduler() {
