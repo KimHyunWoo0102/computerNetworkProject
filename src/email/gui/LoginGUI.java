@@ -85,7 +85,7 @@ public class LoginGUI {
         }
 
         System.out.println("이메일 : " + email + " 비밀번호 : " + password + " 입력완료!");
-        // Auth 인스턴스 생성
+        // Client 인스턴스 생성
         Client client = new Client(email, password);
 
         // 이메일 도메인 검증
