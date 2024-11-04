@@ -33,16 +33,20 @@ public class SendEmailGUI {
     private Client client;
     private FileHandler fileHandler; // File handling utility
     private ScheduledExecutorService noopScheduler;
-
-    public SendEmailGUI(Client client) {
+    private LoginGUI loginGUI;
+    public SendEmailGUI(Client client,LoginGUI loginGUI) {
         this.client = client;
         this.fileHandler = new FileHandler();
+        this.loginGUI = loginGUI;
         initComponents();
         startNoopScheduler();
     }
 
     public void display() {
         frame.setVisible(true);
+    }
+    public void unDisplay() {
+        frame.setVisible(false);
     }
 
     private void initComponents() {
@@ -214,6 +218,8 @@ public class SendEmailGUI {
             } catch (IOException e) {
                 showError("NOOP 명령 전송 오류: " + e.getMessage());
                 stopNoopScheduler(); // 오류 발생 시 스케줄러 중지
+                unDisplay();
+                loginGUI.display();
             }
         }, 0, 9, TimeUnit.SECONDS); // 9초마다 NOOP 전송
     }

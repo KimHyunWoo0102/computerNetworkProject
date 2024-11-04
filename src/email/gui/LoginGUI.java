@@ -103,7 +103,7 @@ public class LoginGUI {
 			    frame.dispose(); // 로그인 창 닫기
 
 			    // SendEmailGUI 인스턴스 생성 및 표시
-			    SendEmailGUI sendEmailGUI = new SendEmailGUI(client); // SendEmailGUI 생성
+			    SendEmailGUI sendEmailGUI = new SendEmailGUI(client,this); // SendEmailGUI 생성
 			    sendEmailGUI.display(); // SendEmailGUI 표시
 		} catch (IOException e) {
 	        showError(e.getMessage()); // 예외 메시지를 사용자에게 표시
