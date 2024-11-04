@@ -12,6 +12,8 @@ import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
 
+import java.util.concurrent.*;
+
 import email.smtp.Client;
 import email.smtp.EmailServiceWithNaver;
 import email.mime.FileHandler;
@@ -30,11 +32,13 @@ public class SendEmailGUI {
     private File attachedFile;
     private Client client;
     private FileHandler fileHandler; // File handling utility
+    private ScheduledExecutorService noopScheduler;
 
     public SendEmailGUI(Client client) {
         this.client = client;
         this.fileHandler = new FileHandler();
         initComponents();
+        startNoopScheduler();
     }
 
     public void display() {
@@ -60,10 +64,14 @@ public class SendEmailGUI {
         errorLabel.setForeground(Color.RED); // Set error message color
 
         // Set colors for the components
-        recipientField.setBackground(new Color(179, 181, 197));
-        subjectField.setBackground(new Color(179, 181, 197));
-        messageArea.setBackground(new Color(179, 181, 197));
-        fileField.setBackground(new Color(179, 181, 197));
+        recipientField.setForeground(new Color(56, 62, 88));
+        recipientField.setBackground(new Color(179, 182, 197));
+        subjectField.setForeground(new Color(56, 62, 88));
+        subjectField.setBackground(new Color(179, 182, 197));
+        messageArea.setForeground(new Color(56, 62, 88));
+        messageArea.setBackground(new Color(179, 182, 197));
+        fileField.setForeground(new Color(56, 62, 88));
+        fileField.setBackground(new Color(179, 182, 197));
        
         attachButton.setBackground(new Color(204, 122, 136));	// 배경색 지정
         attachButton.setForeground(Color.WHITE);
@@ -95,42 +103,67 @@ public class SendEmailGUI {
 
         setLayout();
     }
-
+    
     private void onSendButtonClick() {
         String recipient = recipientField.getText();
         String subject = subjectField.getText();
         String message = messageArea.getText();
         String[] recipients = recipient.split(",");
+        int maxRetries = 3; // 최대 재시도 횟수
+        int retryCount = 0;
+        boolean isSent = false;
 
         if (recipient.isEmpty() || subject.isEmpty() || message.isEmpty()) {
             showError("이메일 주소, 제목, 메시지를 모두 입력하세요.");
             return;
         }
+        
+        // 이메일 형식 유효성 검사
+        if (!isValidEmailFormat(recipients)) {
+            showError("유효한 이메일 주소를 입력하세요.");
+            return; // 유효하지 않은 경우 전송 시도하지 않음
+        }
 
-        try {
-            EmailServiceWithNaver emailService = client.mailService;
-            if (emailService.isCorrectAddress()) {
-                emailService.connect();
-                for (String mailRec : recipients) {
-                    if (attachedFile != null && attachedFile.exists()) {
-                        // If an attachment exists
-                        File[] attachments = {attachedFile};
-                        emailService.sendEmail(mailRec.trim(), subject, message, attachments); // Send email with attachment
-                    } else {
-                        // If no attachment
-                        emailService.sendEmail(mailRec.trim(), subject, message, null); // Send email without attachment
+        while (retryCount < maxRetries && !isSent) {
+            try {
+                EmailServiceWithNaver emailService = client.mailService;
+                if (emailService.isCorrectAddress()) {
+                    emailService.connect();
+                    for (String mailRec : recipients) {
+                        if (attachedFile != null && attachedFile.exists()) {
+                            File[] attachments = {attachedFile};
+                            emailService.sendEmail(mailRec.trim(), subject, message, attachments); // 첨부 파일 있는 경우
+                        } else {
+                            emailService.sendEmail(mailRec.trim(), subject, message, null); // 첨부 파일 없는 경우
+                        }
                     }
+                    JOptionPane.showMessageDialog(frame, "이메일이 성공적으로 전송되었습니다.", "전송 완료", JOptionPane.INFORMATION_MESSAGE);
+                    statusLabel.setText("이메일이 성공적으로 전송되었습니다.");
+                    clearFields();
+                    isSent = true; // 전송 성공 시 true로 설정
                 }
-                // Show success message
-                JOptionPane.showMessageDialog(frame, "이메일이 성공적으로 전송되었습니다.", "전송 완료", JOptionPane.INFORMATION_MESSAGE);
-                statusLabel.setText("이메일이 성공적으로 전송되었습니다.");
-                clearFields();
-                emailService.Quit();
+            } catch (IOException e) {
+                retryCount++; // 실패 시 재시도 횟수 증가
+                showError("전송 오류: " + e.getMessage() + " 재시도 중... (" + retryCount + "/" + maxRetries + ")");
             }
-        } catch (IOException e) {
-            showError("전송 오류: " + e.getMessage());
+        }
+
+        if (!isSent) {
+            showError("이메일 전송 실패: 최대 재시도 횟수를 초과했습니다.");
         }
     }
+    
+    // 이메일 형식 유효성 검사 메서드
+    private boolean isValidEmailFormat(String[] emails) {
+        String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"; // 이메일 형식 정규식
+        for (String email : emails) {
+            if (!email.trim().matches(emailRegex)) {
+                return false; // 이메일 형식이 유효하지 않으면 false 반환
+            }
+        }
+        return true;
+    }
+
 
     private void onAttachButtonClick() {
         JFileChooser fileChooser = new JFileChooser();
@@ -152,6 +185,7 @@ public class SendEmailGUI {
         try {
             EmailServiceWithNaver emailService = client.mailService;
             
+            stopNoopScheduler();
             // 서버에 QUIT 명령을 보내고 연결 종료
             emailService.Quit();
 
@@ -164,7 +198,27 @@ public class SendEmailGUI {
             showError("연결 종료 오류: " + e.getMessage());
         }
     }
+    
+    
+    // 주기적으로 NOOP 명령을 보내기 위한 스케줄러 설정
+    private void startNoopScheduler() {
+        noopScheduler = Executors.newSingleThreadScheduledExecutor();
+        noopScheduler.scheduleAtFixedRate(() -> {
+            try {
+                client.mailService.sendNoop(); // NOOP 명령 전송
+            } catch (IOException e) {
+                showError("NOOP 명령 전송 오류: " + e.getMessage());
+                stopNoopScheduler(); // 오류 발생 시 스케줄러 중지
+            }
+        }, 0, 9, TimeUnit.SECONDS); // 5초마다 NOOP 전송
+    }
 
+    // 스케줄러 중지
+    private void stopNoopScheduler() {
+        if (noopScheduler != null && !noopScheduler.isShutdown()) {
+            noopScheduler.shutdown();
+        }
+    }
 
     private void showError(String message) {
         errorLabel.setText(message);
