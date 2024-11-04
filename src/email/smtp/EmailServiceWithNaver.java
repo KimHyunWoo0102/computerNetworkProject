@@ -126,6 +126,21 @@ public class EmailServiceWithNaver {
         in.close();
         System.out.println("Email sent and connection terminated");
     }
+    
+    public void sendNoop() throws IOException {
+    	 // NOOP 명령 보내기 
+        sendCommand("NOOP");
+
+        // 서버 응답 읽음 
+        String response = getSingleResponse();
+
+        // 응답성공했는지 확인  (2xx or 3xx)
+        if (checkResponse(response)) {
+            System.out.println("NOOP 명령 성공, 연결 유지됨.");
+        } else {
+            throw new IOException("연결 유지에 실패 함. 서버 응답: " + response);
+        } 
+    }
 
     // Read server response
     public String[] get250Response() throws IOException {
