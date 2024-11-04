@@ -169,7 +169,7 @@ public class SendEmailGUI {
     private boolean isValidEmailFormat(String[] emails) {
         String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"; // 이메일 형식 정규식
         for (String email : emails) {
-            if (!email.trim().matches(emailRegex)) {
+            if (!email.trim().matches(emailRegex))
                 return false; // 이메일 형식이 유효하지 않으면 false 반환
 
                 // Show success message
@@ -177,7 +177,7 @@ public class SendEmailGUI {
                 statusLabel.setText("이메일이 성공적으로 전송되었습니다.");
                 clearFields();
 
-            }
+
         }
         return true;
     }
