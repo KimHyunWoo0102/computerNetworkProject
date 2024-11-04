@@ -83,7 +83,7 @@ public class EmailServiceWithNaver {
 
     public void sendEmail(String to, String subject, String body,File[] attachments) throws IOException {
         // Create and send message
-        MimeMessageBuilder builder = new MimeMessageBuilder(mail,to,subject,body,attachments);
+        MimeMessageBuilder builder = new MimeMessageBuilder(mail, to, subject, body, attachments);
         String mimeMessage = builder.build();
 
         sendCommand("MAIL FROM:<" + mail + ">");
@@ -110,21 +110,20 @@ public class EmailServiceWithNaver {
         if (!checkResponse(response)) {
             throw new IOException("An error occurred while sending the email body.\n " + String.join(", ", response));
         }
-
+    }
+    public void Quit() throws IOException {
         // Send QUIT command
         System.out.println("Sending QUIT command");
         out.println("QUIT");
         out.flush();
-        response = getSingleResponse();
+        String response = getSingleResponse();
         if (!checkResponse(response)) {
             throw new IOException("An error occurred during the connection termination process.\n " + String.join(", ", response));
         }
-
         // Close socket
         socket.close();
         out.close();
         in.close();
-
         System.out.println("Email sent and connection terminated");
     }
 
