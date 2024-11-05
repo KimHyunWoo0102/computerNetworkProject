@@ -54,7 +54,7 @@ src
    - Quit 버튼 클릭 시, SMTP 서버 연결을 종료하고 프로그램이 종료됩니다.
 
 3. **파일 첨부**
-   - `FileHandler`에서 파일이 유효한지, MIME 타입이 유효한지 검사함니다. (유효한 파일 형식: 이미지 파일, PDF, 텍스트 파일)
+   - `FileHandler`에서 파일이 유효한지, MIME 타입이 유효한지 검사합니다. (유효한 파일 형식: 이미지 파일, PDF, 텍스트 파일)
    - 조건이 충족되면 파일이 첨부되었다는 메시지를 출력하고, 그렇지 않으면 오류 메시지를 출력합니다.
    - 파일이 존재하지 않으면 파일이 없다는 메시지를 출력합니다.
    
@@ -68,7 +68,7 @@ src
 	<summary> LoginGUI.java </summary> 
 	
 	```javascript
-	   package email.gui;
+	package email.gui;
 	
 	import javax.swing.*; // Swing 컴포넌트 사용을 위한 import
 	import javax.swing.border.EmptyBorder;
@@ -368,7 +368,7 @@ src
 	<summary> SendEmailGUI.java </summary> 
 	
 	```javascript
-	  package email.gui;
+	package email.gui;
 	
 	import javax.swing.*;
 	import javax.swing.border.EmptyBorder;
@@ -702,7 +702,7 @@ src
 		- Client와 LoginGUI 인스턴스를 받아서 이메일 전송에 사용, LoginGUI를 통해 재로그인을 지원
 		- `initComponents()` 호출 → 모든 component 초기화
 		- `startNoopScheduler()` → 서버 연결을 유지하기 위한 NOOP 명령을 9초 간격으로 전송
-	- `botton`
+	- `button`
 		- `onSendButtonClick()`: 수신자, 제목, 메시지 확인 → SMTP 서버에 연결하여 이메일 전송 (전송 실패 시 최대 3번까지 재시도 가능)
 		- `onAttachButtonClick()`: `JFileChooser`을 통해 파일 선택 → `fileHandler.isValidFileType()`로 파일 형식 검사 → 유효한 파일이면 `attachedFile`에 저장
 		- `onQuitButtonClick()`: 서버 연결 종료, NOOP 스케줄러 중지, 창 닫은 후 `LoginGUI` 창 표시  
