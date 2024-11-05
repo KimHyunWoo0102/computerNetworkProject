@@ -68,6 +68,7 @@ public class SendEmailGUI {
         errorLabel.setForeground(Color.RED); // Set error message color
 
         // Set colors for the components
+
         recipientField.setForeground(new Color(56, 62, 88));
         recipientField.setBackground(new Color(179, 182, 197));
         subjectField.setForeground(new Color(56, 62, 88));
@@ -76,6 +77,12 @@ public class SendEmailGUI {
         messageArea.setBackground(new Color(179, 182, 197));
         fileField.setForeground(new Color(56, 62, 88));
         fileField.setBackground(new Color(179, 182, 197));
+
+        recipientField.setForeground(Color.WHITE);
+        subjectField.setForeground(Color.WHITE);
+        messageArea.setForeground(Color.WHITE);
+        fileField.setForeground(Color.WHITE);
+
        
         attachButton.setBackground(new Color(204, 122, 136));	// 배경색 지정
         attachButton.setForeground(Color.WHITE);
@@ -142,10 +149,10 @@ public class SendEmailGUI {
                         }
                     }
                     JOptionPane.showMessageDialog(frame, "이메일이 성공적으로 전송되었습니다.", "전송 완료", JOptionPane.INFORMATION_MESSAGE);
-                    statusLabel.setText("이메일이 성공적으로 전송되었습니다.");
                     clearFields();
                     isSent = true; // 전송 성공 시 true로 설정
                 }
+
             } catch (IOException e) {
                 retryCount++; // 실패 시 재시도 횟수 증가
                 showError("전송 오류: " + e.getMessage() + " 재시도 중... (" + retryCount + "/" + maxRetries + ")");
@@ -161,9 +168,9 @@ public class SendEmailGUI {
     private boolean isValidEmailFormat(String[] emails) {
         String emailRegex = "^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+$"; // 이메일 형식 정규식
         for (String email : emails) {
-            if (!email.trim().matches(emailRegex)) {
+            if (!email.trim().matches(emailRegex))
                 return false; // 이메일 형식이 유효하지 않으면 false 반환
-            }
+            clearFields();
         }
         return true;
     }
