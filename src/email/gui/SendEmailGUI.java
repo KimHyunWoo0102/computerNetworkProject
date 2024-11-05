@@ -149,7 +149,6 @@ public class SendEmailGUI {
                         }
                     }
                     JOptionPane.showMessageDialog(frame, "이메일이 성공적으로 전송되었습니다.", "전송 완료", JOptionPane.INFORMATION_MESSAGE);
-                    statusLabel.setText("이메일이 성공적으로 전송되었습니다.");
                     clearFields();
                     isSent = true; // 전송 성공 시 true로 설정
                 }
@@ -171,13 +170,7 @@ public class SendEmailGUI {
         for (String email : emails) {
             if (!email.trim().matches(emailRegex))
                 return false; // 이메일 형식이 유효하지 않으면 false 반환
-
-                // Show success message
-                JOptionPane.showMessageDialog(frame, "이메일이 성공적으로 전송되었습니다.", "전송 완료", JOptionPane.INFORMATION_MESSAGE);
-                statusLabel.setText("이메일이 성공적으로 전송되었습니다.");
-                clearFields();
-
-
+            clearFields();
         }
         return true;
     }
